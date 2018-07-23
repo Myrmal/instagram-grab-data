@@ -20,3 +20,6 @@ CREATE TABLE `posts` (
 ALTER TABLE `posts`
   ADD UNIQUE KEY `shortcode` (`shortcode`);
 COMMIT;
+
+
+В InstagramCONST.php проставить доступы к БД и логин с паролем от Instagram.
