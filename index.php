@@ -3,7 +3,7 @@ require __DIR__ . '/vendor/autoload.php';
 
 use InstagramGrab\Model\Instagram;
 
-$username = "yulya_tikhonova";
+$username = "tvori_so_mnoj";
 $count_posts = 2;
 
 $run=new Instagram();
