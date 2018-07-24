@@ -39,5 +39,5 @@ COMMIT;
 В <b>getPostLikes.php</b> передается 2 параметра  - username и количество_постов, например:
 
 ```
-путь_к_интерпретатору -f путь_к_скрипту/getFollowers.php username count
+путь_к_интерпретатору -f путь_к_скрипту/getPostLikes.php username count
 ```
