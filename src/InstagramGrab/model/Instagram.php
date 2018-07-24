@@ -4,8 +4,9 @@ namespace InstagramGrab\Model;
 
 use InstagramGrab\InstagramCONST;
 use InstagramGrab\Model\MySQL;
+use InstagramGrab\Model\Connection;
 
-class Instagram extends Connection
+class Instagram
 {
     private $user_id = '';
 
@@ -15,23 +16,28 @@ class Instagram extends Connection
 
     private $result_users_liked_post = [];
 
+    protected function newDataBase()
+    {
+        return new MySQL();
+    }
+
+    protected function newConnection()
+    {
+        return new Connection();
+    }
+
     /*получаем userid*/
     private function getUserID($username)
     {
-        $result = $this->getJSON("https://www.instagram.com/$username/?__a=1");
+        $result = $this->newConnection()->getJSON("https://www.instagram.com/$username/?__a=1");
         $this->user_id = $result->graphql->user->id;
         return;
     }
 
     /*получаем посты и достаем шорткоды*/
-    private function getPosts ($username, $count)
+    private function getPosts ($count)
     {
-        if($this->user_id == '')
-        {
-            $this->getUserID($username);
-        }
-
-        $result=$this->getJSON("https://www.instagram.com/graphql/query/?query_hash=".InstagramCONST::GET_POSTS."&variables={\"id\":\"{$this->user_id}\",\"first\":$count}");
+        $result=$this->newConnection()->getJSON("https://www.instagram.com/graphql/query/?query_hash=".InstagramCONST::GET_POSTS."&variables={\"id\":\"{$this->user_id}\",\"first\":$count}");
 
         foreach ($result->data->user->edge_owner_to_timeline_media->edges as $val)
         {
@@ -52,7 +58,7 @@ class Instagram extends Connection
     /*получаем шорткоды и достаем юзеров*/
     private function usersPostLikes($shortcode, $after ='')
     {
-        $result=$this->getJSON("https://www.instagram.com/graphql/query/?query_hash=".InstagramCONST::GET_POST_LIKES."&variables={\"shortcode\":\"$shortcode\",\"first\":50$after}");
+        $result=$this->newConnection()->getJSON("https://www.instagram.com/graphql/query/?query_hash=".InstagramCONST::GET_POST_LIKES."&variables={\"shortcode\":\"$shortcode\",\"first\":50$after}");
 
         $has_next_page = $result->data->shortcode_media->edge_liked_by->page_info->has_next_page;
 
@@ -85,9 +91,8 @@ class Instagram extends Connection
 
     private function putPostsFollowersIntoTable($shortcode)
     {
-        $db = new MySQL();
+        $db = $this->newDataBase();
         $db->insertIntoTablePosts($shortcode);
-
         $db->insertIntoTablePostsLiked($this->result_users_liked_post, $shortcode);
         return;
     }
@@ -96,7 +101,12 @@ class Instagram extends Connection
 
     public function getPostLikes($username, $count)
     {
-        $this->getPosts($username, $count);
+        if($this->user_id == '')
+        {
+            $this->getUserID($username);
+        }
+
+        $this->getPosts($count);
         for ($i=0; $i<count($this->short_codes); $i++)
         {
             //передаем шорт-коды постов
@@ -107,13 +117,13 @@ class Instagram extends Connection
     /*получение подписчиков*/
     public function getFollowers($username, $after = "")
     {
-        $db = new MySQL();
+        $db = $this->newDataBase();
         if($this->user_id == '')
         {
             $this->getUserID($username);
         }
 
-        $result=$this->getJSON("https://www.instagram.com/graphql/query/?query_hash=".InstagramCONST::GET_FOLLOWERS."&variables={\"id\":\"{$this->user_id}\",\"first\":50$after}");
+        $result=$this->newConnection()->getJSON("https://www.instagram.com/graphql/query/?query_hash=".InstagramCONST::GET_FOLLOWERS."&variables={\"id\":\"{$this->user_id}\",\"first\":50$after}");
 
         foreach ($result->data->user->edge_followed_by->edges as $val)
         {
